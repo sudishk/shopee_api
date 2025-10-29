@@ -7,12 +7,13 @@ const db = mysql.createConnection({
   port: process.env.DB_PORT || 3306
 });
 
-db.connect(error =>{
-    if(error){
-        return console.log("Database connection error" + error);
-    }else{
-    console.log("Database connected" );
-    }
-})
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error("❌ Database connection error:", err);
+  } else {
+    console.log("✅ Database connected successfully!");
+    connection.release();
+  }
+});
 
 module.exports = db.promise();
