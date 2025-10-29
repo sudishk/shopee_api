@@ -53,24 +53,18 @@ app.post("/api/user/profile", upload.single("profilePic"),(req,res)=>{
 //     } );
 // });
 app.post("/api/user", async (request, response) => {
-    // 1. Get and hash user data
     const name = request.body.name;
     const email = request.body.email;
     const password = request.body.password;
     
-    // Hash password (make sure bcrypt is imported/available)
     const passwordHash = await bcrypt.hash(password, 10); 
     
     try {
-        // 2. Execute the query using async/await
-        // db.query() returns an array: [results, fields]
         const [result] = await db.query(
             "INSERT INTO users(name, email, password) VALUES (? , ?, ?)",
             [name, email, passwordHash]
         );
 
-        // 3. Respond with success
-        // 'result.insertId' is available on the result object for INSERT operations
         response.status(201).json({ 
             id: result.insertId, 
             name: name, 
@@ -78,16 +72,10 @@ app.post("/api/user", async (request, response) => {
         });
 
     } catch (error) {
-        // 4. Handle database errors gracefully (e.g., duplicate entry for email)
         console.error("Database INSERT error:", error);
-        
-        // You can add logic here to check for specific MySQL error codes 
-        // like ER_DUP_ENTRY (error.errno === 1062) for better messages.
         if (error.errno === 1062) {
              return response.status(409).json({ message: "This email address is already registered." });
         }
-        
-        // General server error
         return response.status(500).json({ 
             message: "Server internal error. Could not register user." 
         });
@@ -96,42 +84,50 @@ app.post("/api/user", async (request, response) => {
 
 
 // password hashing -register
-app.post("/api/user/login", async (reqest, response)=> {
-    const email = reqest.body.email;
-    const password = reqest.body.password;
-        db.query("SELECT * FROM users WHERE email=?",[ email] ,async (eror, result)=>{
-            // result - []
-            console.log(eror);
-        if(eror) return response.status(500).json({message : "Server internal error" + eror});
-        const dbPassword = result[0].password;
-        const name = result[0].name;
-        const email = result[0].email;
-        const isPasswordSame =await bcrypt.compare(password, dbPassword);
-        if(isPasswordSame){
-            const secretKey ="ghdfjjgi9ew8865w";
-            const token = jwt.sign({name:name, email: email }, secretKey, {expiresIn:"1h"} );// token creating
-            response.status(200).json({message: "login successfully", token: token})
+app.post("/api/user/login", async (request, response) => {
+    const email = request.body.email;
+    const password = request.body.password;
+    const secretKey = "ghdfjjgi9ew8865w"; 
 
-        }else{
-            response.status(200).json({message: "login failed"})
+    try {
+        const [result] = await db.query("SELECT name, email, password FROM users WHERE email=?", [email]);
+        if (result.length === 0) {
+            return response.status(401).json({ message: "Login failed: Invalid email or password." });
         }
 
-    } );
+        const user = result[0];
+        const dbPassword = user.password;
+        const isPasswordSame = await bcrypt.compare(password, dbPassword);
+        
+        if (isPasswordSame) {
+            const token = jwt.sign({ name: user.name, email: user.email }, secretKey, { expiresIn: "1h" }); 
+            
+            response.status(200).json({ 
+                message: "Login successfully", 
+                token: token
+            });
+        } else {
+            response.status(401).json({ message: "Login failed: Invalid email or password." });
+        }
+
+    } catch (error) {
+        console.error("Login attempt error:", error);
+        return response.status(500).json({ 
+            message: "An internal server error occurred during login."
+        });
+    }
 });
 
 
-app.get("/api/users", (reqest, response)=>{
+app.get("/api/users", async(reqest, response)=>{
     const token = reqest.headers.authorization;
     const secretKey ="ghdfjjgi9ew8865w";
-    jwt.verify(token, secretKey, (eror, result)=>{
+    jwt.verify(token, secretKey, async (eror, result)=>{
         if(eror) {
             response.status(400).json({message: "unauthorized"})
         }else{
-             db.query("SELECT * FROM users",(eror, data)=>{
-                 if(eror) return response.status(500).json({message : "Server internal error"});
-                     response.status(200).json(data);
-                } );
-             
+            const data =await db.query("SELECT * FROM users");
+            response.status(200).json(data);
         }
     })
    
