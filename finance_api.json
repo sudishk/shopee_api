@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "Phone OTP Authentication API",
+    "_postman_id": "c1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e",
+    "description": "API collection for phone number based authentication using OTP.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Send OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+911234567890\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/send-otp",
+          "host": ["{{base_url}}"],
+          "path": ["send-otp"]
+        },
+        "description": "Send OTP to user's phone number."
+      },
+      "response": []
+    },
+    {
+      "name": "Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+911234567890\",\n  \"otp\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/verify-otp",
+          "host": ["{{base_url}}"],
+          "path": ["verify-otp"]
+        },
+        "description": "Verify OTP and receive JWT token."
+      },
+      "response": []
+    },
+    {
+      "name": "Resend OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+911234567890\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/resend-otp",
+          "host": ["{{base_url}}"],
+          "path": ["resend-otp"]
+        },
+        "description": "Resend OTP to user's phone number."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://yourdomain.com/api/v1/auth"
+    }
+  ]
+}
