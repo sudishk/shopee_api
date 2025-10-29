@@ -39,19 +39,61 @@ app.post("/api/user/profile", upload.single("profilePic"),(req,res)=>{
     }
 });
 
-// password hashing -register
-app.post("/api/user", async (reqest, response)=> {
-    const name = reqest.body.name;
-    const email = reqest.body.email;
-    const password = reqest.body.password;
-    const passwordHash =await bcrypt.hash(password, 10) // 2 ka power 10 standard 
-        db.query("INSERT INTO users(name, email, password) VALUES (? , ?, ?)",[name, email,passwordHash] ,(eror, result)=>{
-            console.log(eror);
-        if(eror) return response.status(500).json({message : "Server internal error" + eror});
-        response.status(201).json({id: result.insertId, name : name, email: email});
+// // password hashing -register
+// app.post("/api/user", async (reqest, response)=> {
+//     const name = reqest.body.name;
+//     const email = reqest.body.email;
+//     const password = reqest.body.password;
+//     const passwordHash =await bcrypt.hash(password, 10) // 2 ka power 10 standard 
+//         db.query("INSERT INTO users(name, email, password) VALUES (? , ?, ?)",[name, email,passwordHash] ,(eror, result)=>{
+//             console.log(eror);
+//         if(eror) return response.status(500).json({message : "Server internal error" + eror});
+//         response.status(201).json({id: result.insertId, name : name, email: email});
 
-    } );
+//     } );
+// });
+app.post("/api/user", async (request, response) => {
+    // 1. Get and hash user data
+    const name = request.body.name;
+    const email = request.body.email;
+    const password = request.body.password;
+    
+    // Hash password (make sure bcrypt is imported/available)
+    const passwordHash = await bcrypt.hash(password, 10); 
+    
+    try {
+        // 2. Execute the query using async/await
+        // db.query() returns an array: [results, fields]
+        const [result] = await db.query(
+            "INSERT INTO users(name, email, password) VALUES (? , ?, ?)",
+            [name, email, passwordHash]
+        );
+
+        // 3. Respond with success
+        // 'result.insertId' is available on the result object for INSERT operations
+        response.status(201).json({ 
+            id: result.insertId, 
+            name: name, 
+            email: email 
+        });
+
+    } catch (error) {
+        // 4. Handle database errors gracefully (e.g., duplicate entry for email)
+        console.error("Database INSERT error:", error);
+        
+        // You can add logic here to check for specific MySQL error codes 
+        // like ER_DUP_ENTRY (error.errno === 1062) for better messages.
+        if (error.errno === 1062) {
+             return response.status(409).json({ message: "This email address is already registered." });
+        }
+        
+        // General server error
+        return response.status(500).json({ 
+            message: "Server internal error. Could not register user." 
+        });
+    }
 });
+
 
 // password hashing -register
 app.post("/api/user/login", async (reqest, response)=> {
