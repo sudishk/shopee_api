@@ -5,8 +5,9 @@ const jwt = require("jsonwebtoken")
 const multer = require("multer");
 const bcrypt = require("bcrypt");
 const path = require("path");
+const { env } = require("process");
 const app = express(); // object
-
+console.log("Port is " + process.env.DB_PORT)
 app.use(express.json()); // adding middle ware
 const storage = multer.diskStorage({
     destination:"./profileImages",
